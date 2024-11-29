@@ -1,0 +1,57 @@
+import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+
+# Step 1: Load Raw Data
+def load_data(filepath):
+    """Loads raw data from a file."""
+    return pd.read_csv(filepath)
+
+# Step 2: Data Cleaning
+def clean_data(data):
+    """Cleans data by handling missing values and duplicates."""
+    # Remove duplicates
+    data = data.drop_duplicates()
+    
+    # Handle missing values
+    numeric_features = data.select_dtypes(include=['int64', 'float64']).columns
+    categorical_features = data.select_dtypes(include=['object']).columns
+    
+    imputer = ColumnTransformer(
+        transformers=[
+            ('num', SimpleImputer(strategy='mean'), numeric_features),
+            ('cat', SimpleImputer(strategy='most_frequent'), categorical_features)
+        ]
+    )
+    cleaned_data = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
+    return cleaned_data
+
+# Step 3: Data Transformation
+def transform_data(data):
+    """Transforms data by scaling and encoding."""
+    numeric_features = data.select_dtypes(include=['int64', 'float64']).columns
+    categorical_features = data.select_dtypes(include=['object']).columns
+    
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', StandardScaler(), numeric_features),
+            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
+        ]
+    )
+    transformed_data = preprocessor.fit_transform(data)
+    return transformed_data
+
+# Step 4: Preprocess Data Workflow
+def preprocess_data(filepath):
+    """End-to-end data preprocessing pipeline."""
+    raw_data = load_data(filepath)
+    cleaned_data = clean_data(raw_data)
+    processed_data = transform_data(cleaned_data)
+    return processed_data
+
+# Usage Example
+file_path = 'path/to/your/data.csv'
+preprocessed_data = preprocess_data(file_path)
+
+print("Preprocessing complete. Data is ready for AI model training.")
